@@ -12,12 +12,25 @@
 class Space
 {
     public:
-        Space();
-        virtual ~Space();
+
+        ~Space()
+        {
+            for(BaseComponentManager* cm : cmanagers_)
+                delete cm;
+        };
+
+        template<class CompType>
+        ComponentManager<CompType>* getManager()
+        {
+            std::size_t index = ComponentsIndex<CompType>();
+            if(index >= cmanagers_.size())cmanagers_.push_back(new ComponentManager<CompType>());
+            return (ComponentManager<CompType>*) cmanagers_[index];
+        }
+
 
     protected:
     private:
-        typedef vector<ComponentManager<Component>> veccm;
+        typedef vector<BaseComponentManager*> veccm;
         unordered_set<Entity::Id> entities_;
         veccm cmanagers_;
         size_t componentTypesCount_=0;

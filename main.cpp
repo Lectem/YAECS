@@ -12,18 +12,24 @@ struct AComponent : Component{
         cout << "AComponent destructed" << endl;
     };
 };
-struct BComponent : Component{};
+struct BComponent : Component
+{
+    BComponent(int i){ cout <<"BComponent("<< i<<")"<<endl;}
+    ~BComponent()
+    {
+        cout << "BComponent destructed" << endl;
+    };
+};
 
 int main()
 {
-    ComponentManager<AComponent> cma;
-    cma.addComponent(0);
-    cma.addComponent(1);
-    cma.addComponent(2);
-    cma.deleteComponent(0);
-    cma.deleteComponent(1);
-    cma.deleteComponent(1);
-    cma.deleteComponent(2);
-
+    Space space;
+//    ComponentManager<AComponent>* cma= space.getManager<AComponent>();
+//    cma->addComponent(0);
+//    cma->addComponent(0);
+//    cma->addComponent(1);
+//    cma->addComponent(0);
+    ComponentManager<BComponent>* cmb= space.getManager<BComponent>();
+    //cmb->addComponent(0,1);
     return 0;
 }

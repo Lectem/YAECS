@@ -14,10 +14,11 @@ public:
     class iterator;
 
     explicit BasicPool()
-        : end_(0), element_size_(sizeof(T)), chunk_size_(ChunkSize), capacity_(0) {}
+        : end_(0), element_size_(sizeof(T)), chunk_size_(ChunkSize) {reserve(1);}
 
     ~BasicPool()
     {
+        clear();
         for (char *ptr : blocks_)delete[] ptr;
         for (bool *ptr : blocks_usage_)delete[] ptr;
     }
@@ -145,7 +146,7 @@ class BasicPool<T,ChunkSize>::iterator: public std::iterator<std::input_iterator
 public:
     iterator(BasicPool<T,ChunkSize> *pool,std::size_t x) :ind_(x),pool_(pool) {}
     iterator(const iterator& it) : ind_(it.ind_),pool_(it.pool_) {}
-    iterator& operator++() {while(ind_ < pool_->end_ && !pool_->usage(ind_)){cout<<ind_<<endl;ind_++;};return *this;}
+    iterator& operator++() {while(ind_ < pool_->end_ && !pool_->usage(ind_)){ind_++;};return *this;}
     iterator operator++(int) {iterator tmp(*this); operator++(); return tmp;}
     bool operator==(const iterator& rhs) {return ind_==rhs.ind_ && pool_==rhs.pool_;}
     bool operator!=(const iterator& rhs) {return ind_!=rhs.ind_ || pool_!=rhs.pool_;}
