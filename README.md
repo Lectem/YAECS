@@ -8,6 +8,7 @@ Yet another entity-components system written in c++11
   It is actually undocumented and no comments were written, but it should come soon.
 
 #TODO
+*Implement spaces
 *Add systems
 *Add events or messages ?
 *Test various storage solutions
