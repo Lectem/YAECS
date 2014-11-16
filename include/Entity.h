@@ -9,5 +9,5 @@
 
 struct Entity
 {
-    typedef size_t Id;
+    typedef std::size_t Id;
 };
