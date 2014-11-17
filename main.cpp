@@ -6,7 +6,8 @@ using namespace std;
 #include "ComponentManager.h"
 #include "Pools.h"
 
-struct AComponent : Component{
+struct AComponent : Component
+{
     ~AComponent()
     {
         cout << "AComponent destructed" << endl;
@@ -24,12 +25,10 @@ struct BComponent : Component
 int main()
 {
     Space space;
-    ComponentManager<AComponent>* cma= space.getManager<AComponent>();
-    cma->addComponent(0);
-    cma->addComponent(0);
-    cma->addComponent(1);
-    cma->addComponent(0);
-    ComponentManager<BComponent>* cmb= space.getManager<BComponent>();
-    cmb->addComponent(0,1);
+    Entity::Id ent = space.createEntity();
+    space.addComponent<AComponent>(ent);
+    space.addComponent<AComponent>(ent);
+    space.addComponent<AComponent>(ent);
+    space.addComponent<BComponent>(ent,42);
     return 0;
 }
