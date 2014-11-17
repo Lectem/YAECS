@@ -24,10 +24,10 @@ public:
     }
 
     template<class ...Args>
-    iterator emplace(Args ...args)
+    iterator emplace(Args &&...args)
     {
         iterator it(this,getAvailableIndex());
-        new(get(it)) T(args...);
+        new(get(it)) T(std::forward<Args>(args)...);
         usage(it)=true;
         ++size_;
         return it;
@@ -47,7 +47,7 @@ public:
 
     void clear()
     {
-        for(iterator it=begin(); it<end(); ++it)
+        for(iterator it=begin(); it != end(); ++it)
         {
             bool& usageit=usage(it);
             assert(usageit);
@@ -116,6 +116,16 @@ protected:
         return blocks_[n / chunk_size_] + (n % chunk_size_) * element_size_;
     }
 
+    inline T *get(iterator it)
+    {
+        return get(it.ind_);
+    }
+
+    inline const T *get(iterator it) const
+    {
+        return get(it.ind_);
+    }
+
     inline bool& usage(std::size_t n)
     {
         assert(n < capacity_);
@@ -126,6 +136,15 @@ protected:
     {
         assert(n < capacity_);
         return *(blocks_usage_[n / chunk_size_] + (n % chunk_size_) * sizeof(bool));
+    }
+    inline bool& usage(iterator it)
+    {
+        return usage(it.ind_);
+    }
+
+    inline bool& usage(iterator it) const
+    {
+        return usage(it.ind_);
     }
 
     std::vector<char*> blocks_;
@@ -146,10 +165,10 @@ class BasicPool<T,ChunkSize>::iterator: public std::iterator<std::input_iterator
 public:
     iterator(BasicPool<T,ChunkSize> *pool,std::size_t x) :ind_(x),pool_(pool) {}
     iterator(const iterator& it) : ind_(it.ind_),pool_(it.pool_) {}
-    iterator& operator++() {while(ind_ < pool_->end_ && !pool_->usage(ind_)){ind_++;};return *this;}
+    iterator& operator++() {while(ind_ < pool_->end_ && !pool_->usage(ind_)){++ind_;};return *this;}
     iterator operator++(int) {iterator tmp(*this); operator++(); return tmp;}
     bool operator==(const iterator& rhs) {return ind_==rhs.ind_ && pool_==rhs.pool_;}
     bool operator!=(const iterator& rhs) {return ind_!=rhs.ind_ || pool_!=rhs.pool_;}
     T& operator*() {return *(pool_->get(ind_));}
-    operator std::size_t (){return ind_;}
+    friend BasicPool<T,ChunkSize>;
 };

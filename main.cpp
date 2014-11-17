@@ -24,12 +24,12 @@ struct BComponent : Component
 int main()
 {
     Space space;
-//    ComponentManager<AComponent>* cma= space.getManager<AComponent>();
-//    cma->addComponent(0);
-//    cma->addComponent(0);
-//    cma->addComponent(1);
-//    cma->addComponent(0);
+    ComponentManager<AComponent>* cma= space.getManager<AComponent>();
+    cma->addComponent(0);
+    cma->addComponent(0);
+    cma->addComponent(1);
+    cma->addComponent(0);
     ComponentManager<BComponent>* cmb= space.getManager<BComponent>();
-    //cmb->addComponent(0,1);
+    cmb->addComponent(0,1);
     return 0;
 }
