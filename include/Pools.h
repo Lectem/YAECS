@@ -14,13 +14,14 @@ public:
     class iterator;
 
     explicit BasicPool()
-        : end_(0), element_size_(sizeof(T)), chunk_size_(ChunkSize) {reserve(1);}
+        : element_size_(sizeof(T)), chunk_size_(ChunkSize)
+    {reserve(1);}
 
     ~BasicPool()
     {
         clear();
         for (char *ptr : blocks_)delete[] ptr;
-        for (bool *ptr : blocks_usage_)delete[] ptr;
+
     }
 
     template<class ...Args>
@@ -35,13 +36,13 @@ public:
 
     void remove(iterator it)
     {
-        bool& usageit=usage(it);
+        vector<bool>::reference usageit=usage(it);
         if(usageit)
         {
             get(it)->~T();
             usageit=false;
-            free_slots_indexes_.push(it);
-            --size_;
+            free_slots_indexes_.push(it.ind_);
+            if(!(--size_))end_=0;
         }
     }
 
@@ -49,11 +50,11 @@ public:
     {
         for(iterator it=begin(); it != end(); ++it)
         {
-            bool& usageit=usage(it);
-            assert(usageit);
+            vector<bool>::reference usageit=usage(it);
             get(it)->~T();
             usageit=false;
         }
+
         std::queue<std::size_t> emptyqueue;
         free_slots_indexes_.swap(emptyqueue);
         size_=0;
@@ -62,9 +63,8 @@ public:
 
     inline iterator begin()
     {
-        std::size_t tmp=0;
-        while(!usage(tmp) && tmp<end_)tmp++;
-        return iterator(this,tmp);
+        while(!usage(begin_) && begin_<end_)begin_++;
+        return iterator(this,begin_);
     }
     inline iterator end()
     {
@@ -81,9 +81,8 @@ protected:
         {
             char *chunk = new char[element_size_ * chunk_size_];
             blocks_.push_back(chunk);
-            bool *chunk_usage = new bool[chunk_size_];
-            blocks_usage_.push_back(chunk_usage);
             capacity_ += chunk_size_;
+            blocks_usage_.resize(capacity_);
         }
     }
 
@@ -95,11 +94,13 @@ protected:
         {
             size_t index = free_slots_indexes_.front();
             free_slots_indexes_.pop();
+            if(index<begin_)begin_=index;
             return index;
         }
         else
         {
             reserve(capacity_+chunk_size_);
+            assert(end_ < capacity_);
             return end_++;
         }
     }
@@ -126,31 +127,32 @@ protected:
         return get(it.ind_);
     }
 
-    inline bool& usage(std::size_t n)
+    inline vector<bool>::reference usage(std::size_t n)
     {
         assert(n < capacity_);
-        return *(blocks_usage_[n / chunk_size_] + (n % chunk_size_) * sizeof(bool));
+        return blocks_usage_[n];
     }
 
-    inline bool& usage(std::size_t n) const
+    inline vector<bool>::reference usage(std::size_t n) const
     {
         assert(n < capacity_);
-        return *(blocks_usage_[n / chunk_size_] + (n % chunk_size_) * sizeof(bool));
+        return blocks_usage_[n];
     }
-    inline bool& usage(iterator it)
+    inline vector<bool>::reference usage(iterator it)
     {
         return usage(it.ind_);
     }
 
-    inline bool& usage(iterator it) const
+    inline vector<bool>::reference usage(iterator it) const
     {
         return usage(it.ind_);
     }
 
     std::vector<char*> blocks_;
-    std::vector<bool*> blocks_usage_;
+    std::vector<bool> blocks_usage_;
     std::queue<size_t> free_slots_indexes_;
-    std::size_t end_;
+    std::size_t begin_=0;
+    std::size_t end_=0;
     std::size_t element_size_;
     std::size_t chunk_size_;
     std::size_t size_ = 0;
@@ -165,7 +167,7 @@ class BasicPool<T,ChunkSize>::iterator: public std::iterator<std::input_iterator
 public:
     iterator(BasicPool<T,ChunkSize> *pool,std::size_t x) :ind_(x),pool_(pool) {}
     iterator(const iterator& it) : ind_(it.ind_),pool_(it.pool_) {}
-    iterator& operator++() {while(ind_ < pool_->end_ && !pool_->usage(ind_)){++ind_;};return *this;}
+    iterator& operator++() {while(ind_ < pool_->end_ && !pool_->usage(ind_)){++ind_;}return *this;}
     iterator operator++(int) {iterator tmp(*this); operator++(); return tmp;}
     bool operator==(const iterator& rhs) {return ind_==rhs.ind_ && pool_==rhs.pool_;}
     bool operator!=(const iterator& rhs) {return ind_!=rhs.ind_ || pool_!=rhs.pool_;}

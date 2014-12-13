@@ -21,6 +21,7 @@
 class BaseComponentManager
 {
     public:
+    virtual void deleteComponent_no_type_(Entity::Id){}
     virtual ~BaseComponentManager(){}
 };
 
@@ -32,6 +33,7 @@ public:
   template<class ...Args>
     bool addComponent(Entity::Id ent,Args&& ...args);
     void deleteComponent(Entity::Id id);
+    void deleteComponent_no_type_(Entity::Id id);
     void clear();
 
 private:
@@ -79,6 +81,14 @@ template<class T,class Pool> typename Pool::iterator ComponentManager<T,Pool>::d
 /*Destruction of components will be done upon manager's destruction*/
 template<class T,class Pool>
 void ComponentManager<T,Pool>::deleteComponent(Entity::Id ent)
+{
+    typename Pool::iterator comp=dettachComponent(ent);
+    components_.remove(comp);
+}
+
+/*Virtual version of deleteComponent, needed for entity destruction*/
+template<class T,class Pool>
+void ComponentManager<T,Pool>::deleteComponent_no_type_(Entity::Id ent)
 {
     typename Pool::iterator comp=dettachComponent(ent);
     components_.remove(comp);

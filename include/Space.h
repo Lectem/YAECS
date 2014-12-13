@@ -8,6 +8,7 @@
 #include <vector>
 #include <unordered_set>
 #include "ComponentManager.h"
+#include "System.h"
 
 class Space
 {
@@ -15,14 +16,27 @@ class Space
         Space():lastEntityId(0){}
         ~Space()
         {
+
             for(BaseComponentManager* cm : cmanagers_)
                 delete cm;
+
+            for(System* sm : systems_)
+                delete sm;
         };
 
         Entity::Id createEntity()
         {
             entities_.insert(lastEntityId);
             return lastEntityId++;
+        }
+
+        void destroyEntity(Entity::Id entity)
+        {
+            entities_.erase(entity);
+            for(auto it=cmanagers_.begin();it!=cmanagers_.end();++it)
+            {
+                (*it)->deleteComponent_no_type_(entity);
+            }
         }
 
         template<class CompType,class ... Args>
@@ -34,22 +48,33 @@ class Space
         }
 
         template<class CompType,class ... Args>
-        void deleteComponent(Entity::Id entity,Args&& ...args)
+        void deleteComponent(Entity::Id entity)
         {
             assert(entities_.find(entity) != entities_.end());
             static ComponentManager<CompType>* manager=getManager<CompType>();
-            return manager->deleteComponent(entity,std::forward<Args>(args)...);
+            return manager->deleteComponent(entity);
+        }
+
+        template<class SysType,class ... Args>
+        bool addSystem(Args&& ...args)
+        {
+            return systems_.emplace_back(new SysType(args...));
+        }
+
+        template<class SysType>
+        void deleteSystem()
+        {
+
         }
 
 
     protected:
     private:
-        typedef vector<BaseComponentManager*> veccm;
+        vector<BaseComponentManager*> cmanagers_;
         unordered_set<Entity::Id> entities_;
         Entity::Id lastEntityId;
+        vector<System*> systems_;
 
-
-        veccm cmanagers_;
         size_t componentTypesCount_=0;
 
         template<class CompType>

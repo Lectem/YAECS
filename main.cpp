@@ -5,30 +5,42 @@ using namespace std;
 #include "Component.h"
 #include "ComponentManager.h"
 #include "Pools.h"
-
-struct AComponent : Component
+#include <map>
+struct AComponent : public Component
 {
+    AComponent()
+    {
+        //cout<<"AComponent()"<<endl;
+    }
     ~AComponent()
     {
-        cout << "AComponent destructed" << endl;
+        //cout << "AComponent destructed" << endl;
     };
 };
-struct BComponent : Component
+struct BComponent : public Component
 {
-    BComponent(int i){ cout <<"BComponent("<< i<<")"<<endl;}
+    BComponent(int i,char c)
+    {
+        //cout <<"BComponent("<< i<<","<<c<<")"<<endl;
+    }
     ~BComponent()
     {
-        cout << "BComponent destructed" << endl;
+        //cout << "BComponent destructed" << endl;
     };
 };
 
 int main()
 {
     Space space;
-    Entity::Id ent = space.createEntity();
-    space.addComponent<AComponent>(ent);
-    space.addComponent<AComponent>(ent);
-    space.addComponent<AComponent>(ent);
-    space.addComponent<BComponent>(ent,42);
+    for(int i=0;i<10000000;++i)
+    {
+        Entity::Id ent = space.createEntity();
+        space.addComponent<AComponent>(ent);
+        space.addComponent<BComponent>(ent,42,'a');
+        if(i%2)space.deleteComponent<BComponent>(ent);
+        if(!i%5)space.destroyEntity(ent);
+    }
+
+
     return 0;
 }

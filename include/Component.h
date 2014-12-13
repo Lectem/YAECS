@@ -10,6 +10,9 @@
 
 #include "Space.h"
 
+
+#include <vector>
+
 struct Component
 {
 

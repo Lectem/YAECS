@@ -42,6 +42,7 @@
 		<Unit filename="include/Entity.h" />
 		<Unit filename="include/Pools.h" />
 		<Unit filename="include/Space.h" />
+		<Unit filename="include/System.h" />
 		<Unit filename="main.cpp" />
 		<Unit filename="src/Space.cpp" />
 		<Extensions>
