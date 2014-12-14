@@ -21,28 +21,29 @@
 class BaseComponentManager
 {
     public:
-    virtual void deleteComponent_no_type_(Entity::Id){}
+    virtual void deleteComponent(Entity::Id)=0;
     virtual ~BaseComponentManager(){}
 };
 
-//TODO: add a base pool class to inherit from, to hide container behaviors
 template <class T,class Pool = BasicPool<T>>
 class ComponentManager : public BaseComponentManager
 {
+typedef std::unordered_map<Entity::Id,typename Pool::iterator > linksEC_container;
 public:
+    typedef typename linksEC_container::iterator iterator;
   template<class ...Args>
     bool addComponent(Entity::Id ent,Args&& ...args);
     void deleteComponent(Entity::Id id);
-    void deleteComponent_no_type_(Entity::Id id);
     void clear();
-
+    ComponentManager::iterator begin(){return linksEC_.begin();}
+    ComponentManager::iterator end(){return linksEC_.end();}
 private:
   template<class ...Args>
     typename Pool::iterator createComponent(Args&& ...args);
     bool attachComponent(Entity::Id ent,typename Pool::iterator cp);
     typename Pool::iterator dettachComponent(Entity::Id ent);
 
-    std::unordered_map<Entity::Id,typename Pool::iterator > linksEC_;
+    linksEC_container linksEC_;
     Pool components_;
 };
 
@@ -86,13 +87,6 @@ void ComponentManager<T,Pool>::deleteComponent(Entity::Id ent)
     components_.remove(comp);
 }
 
-/*Virtual version of deleteComponent, needed for entity destruction*/
-template<class T,class Pool>
-void ComponentManager<T,Pool>::deleteComponent_no_type_(Entity::Id ent)
-{
-    typename Pool::iterator comp=dettachComponent(ent);
-    components_.remove(comp);
-}
 
 template<class T,class Pool>
 void ComponentManager<T,Pool>::clear()

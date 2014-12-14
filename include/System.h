@@ -9,6 +9,7 @@
 
 class System
 {
+    friend class Space;
     virtual void update()=0;
 public:
     virtual ~System(){}

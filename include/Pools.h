@@ -63,7 +63,7 @@ public:
 
     inline iterator begin()
     {
-        while(!usage(begin_) && begin_<end_)begin_++;
+        while(begin_<end_ && !usage(begin_) )begin_++;
         return iterator(this,begin_);
     }
     inline iterator end()
