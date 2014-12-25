@@ -7,13 +7,15 @@
  * \author Lectem
  */
 
-class System
-{
-    friend class Space;
-    virtual void update()=0;
-public:
-    virtual ~System(){}
-};
-
+namespace YAECS {
+	class Space;
+	class System
+	{
+		friend class Space;
+		virtual void update(Space &) = 0;
+	public:
+		virtual ~System() {}
+	};
+}
 
 #endif // SYSTEM_H_INCLUDED

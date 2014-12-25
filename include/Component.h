@@ -12,10 +12,11 @@
 
 
 #include <vector>
+namespace YAECS {
 
-struct Component
-{
+	struct Component
+	{
 
-};
-
+	};
+}
 #endif // COMPONENT_H_INCLUDED
