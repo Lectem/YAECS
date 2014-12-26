@@ -61,23 +61,37 @@ namespace YAECS {
 
 		template<class SysType, class ... Args>
 		void addSystem(Args&& ...args)
-		{
+		{/*
 		    auto & sysind =systemIndex<SysType>();
 			if(sysind == systems_.end() )
             {
                 systems_.push_front(new SysType(args...));
                 sysind = systems_.begin();
-            }
+            }*/
+            size_t index = systemIndex<SysType>();
+			if (index >= systems_.size())
+			{
+				//necessary because comp indexes are the same for all space instances...
+				systems_.resize(index+1,nullptr);
+			}
+			if(systems_[index] == nullptr)systems_[index]=(new SysType(args...));
 		}
 
 		template<class SysType>
 		void deleteSystem()
 		{
-			auto & it = systemIndex<SysType>();
+			size_t index=systemIndex<SysType>();
+			if(systems_[index] != nullptr)
+            {
+                delete systems_[index];
+                systems_[index]=nullptr;
+            }
+			/*auto & it = systemIndex<SysType>();
 			assert(it != systems_.end());
 			delete *it;
 			systems_.erase(it);
-			it = systems_.end();
+			it = systems_.end();*/
+
 		}
 
 		template<class ...T>
@@ -88,7 +102,8 @@ namespace YAECS {
 		{
 			for (auto sys : systems_)
 			{
-				sys->update(*this);
+			    if(sys != nullptr)
+                    sys->update(*this);
 			}
 		}
 
@@ -97,35 +112,38 @@ namespace YAECS {
 		vector<BaseComponentManager*> cmanagers_;
 		unordered_set<Entity::Id> entities_;
 		Entity::Id lastEntityId;
-		list<System*> systems_;
+		vector<System*> systems_;
 
 		size_t componentTypesCount_ = 0;
+		size_t systemTypesCount_ = 0;
 
 		template<class CompType>
 		ComponentManager<CompType>* getManager()
 		{
-			std::size_t index = ComponentsIndex<CompType>();
+			size_t index = ComponentsIndex<CompType>();
 			if (index >= cmanagers_.size())
 			{
 				//necessary because comp indexes are the same for all space instances...
 				cmanagers_.resize(index+1,nullptr);
-				cmanagers_[index]=(new ComponentManager<CompType>());
 			}
-			
+			if(cmanagers_[index] == nullptr)cmanagers_[index]=(new ComponentManager<CompType>());
+
 			return (ComponentManager<CompType>*) cmanagers_[index];
 		}
 
 		template<class CompType>
-		size_t& ComponentsIndex()
+		size_t ComponentsIndex()
 		{
 			static size_t index = componentTypesCount_++;
 			return index;
 		}
 
 		template<class SysType>
-		list<System*>::iterator& systemIndex()
+		//list<System*>::iterator& systemIndex()
+		size_t systemIndex()
 		{
-			static typename std::list<System*>::iterator sys_index_=systems_.end();
+			//static typename std::list<System*>::iterator sys_index_=systems_.end();
+			static size_t sys_index_=systemTypesCount_++;
 			return sys_index_;
 		}
 	};
@@ -141,19 +159,19 @@ namespace YAECS {
 			tuple<typename ComponentManager<FirstComp>::iterator, typename ComponentManager<Components>::iterator ...> comps_iters_;
 
 
-			template<std::size_t N = 0>
+			template<size_t N = 0>
 			bool getComponent(Entity::Id ent)
 			{
 				get<N>(comps_iters_) = get<N>(comps_)->getAttachedComponent(ent);
 				return std::get<N>(comps_iters_) != std::get<N>(comps_)->end();
 			}
-			template<std::size_t N>
+			template<size_t N>
 			typename std::enable_if< N == 1 + sizeof...(Components), bool>::type hasComponents(Entity::Id)
 			{
 				return true;
 			}
 
-			template<std::size_t N>
+			template<size_t N>
 			typename std::enable_if< N <= sizeof...(Components), bool>::type hasComponents(Entity::Id ent)
 			{
 				return getComponent<N>(ent) && hasComponents<N + 1>(ent);

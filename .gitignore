@@ -1,4 +1,8 @@
 bin/
 obj/
+build*/
+gmon.out
+prof.txt
+vs/
 YAECS.depend
 YAECS.layout

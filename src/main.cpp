@@ -106,23 +106,21 @@ int main()
         }
     }
 
-	cout << "space.addSystem<Physique>() : " << endl;
 	space.addSystem<Physique>();
-	//space.addSystem<Affichage>();
+	space.addSystem<Affichage>();
 	Space space2;
-	cout << "space2.addSystem<Physique>() : " << endl;
-	space2.addSystem<Physique>();
+	space2.addSystem<Affichage>();
 	auto t1 = std::chrono::high_resolution_clock::now();
 	int i;
-	for (i = 0; i < 1001;i++)
+	for (i = 0; i < 0;i++)
         space.update();
     auto t2 = std::chrono::high_resolution_clock::now();
     std::cout << i << "updates took "
             << std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count()
             << " milliseconds\n";
-		
+
 	space.deleteSystem<Physique>();
-	
+	space2.deleteSystem<Affichage>();
 	space.addSystem<Affichage>();
 	space.update();
 

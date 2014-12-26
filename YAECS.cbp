@@ -14,7 +14,7 @@
 				<Compiler>
 					<Add option="-pg" />
 					<Add option="-g" />
-					<Add option="-O0" />
+					<Add option="-O0 -Wfatal-errors" />
 					<Add directory="include" />
 				</Compiler>
 				<Linker>
@@ -49,8 +49,8 @@
 		<Unit filename="include/Pools.h" />
 		<Unit filename="include/Space.h" />
 		<Unit filename="include/System.h" />
-		<Unit filename="main.cpp" />
-		<Unit filename="src/Space.cpp" />
+		<Unit filename="include/TupleGet.h" />
+		<Unit filename="src/main.cpp" />
 		<Extensions>
 			<code_completion />
 			<envvars />
