@@ -5,4 +5,4 @@ compiler:
   - clang
 
 script:
-  -cmake -G"Unix Makefiles" -DCMAKE_CXX_COMPILER=$(which $CXX)
+  - cmake -G"Unix Makefiles" -DCMAKE_CXX_COMPILER=$(which $CXX)
