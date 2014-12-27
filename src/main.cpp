@@ -112,7 +112,7 @@ int main()
 	space2.addSystem<Affichage>();
 	auto t1 = std::chrono::high_resolution_clock::now();
 	int i;
-	for (i = 0; i < 0;i++)
+	for (i = 0; i < 1;i++)
         space.update();
     auto t2 = std::chrono::high_resolution_clock::now();
     std::cout << i << "updates took "

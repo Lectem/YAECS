@@ -14,7 +14,20 @@ namespace YAECS {
 	class BasicPool
 	{
 	public:
-		class iterator;
+		class iterator
+		{
+	    		std::size_t ind_;
+                BasicPool<T, ChunkSize> *pool_;
+            public:
+                iterator(BasicPool<T, ChunkSize> *pool, std::size_t x) :ind_(x), pool_(pool) {}
+                iterator(const iterator& it) : ind_(it.ind_), pool_(it.pool_) {}
+                iterator& operator++() { while (ind_ < pool_->end_ && !pool_->usage(ind_)) { ++ind_; }return *this; }
+                iterator operator++(int) { iterator tmp(*this); operator++(); return tmp; }
+                bool operator==(const iterator& rhs) { return ind_ == rhs.ind_ && pool_ == rhs.pool_; }
+                bool operator!=(const iterator& rhs) { return ind_ != rhs.ind_ || pool_ != rhs.pool_; }
+                T& operator*() { return *(pool_->get(ind_)); }
+                friend BasicPool < T, ChunkSize >;
+		};
 		explicit BasicPool()
 			: element_size_(sizeof(T)), chunk_size_(ChunkSize)
 		{
@@ -162,22 +175,5 @@ namespace YAECS {
 		std::size_t size_ = 0;
 		std::size_t capacity_;
 	};
-
-	template<class T, std::size_t ChunkSize>
-	class BasicPool<T, ChunkSize>::iterator
-	{
-		std::size_t ind_;
-		BasicPool<T, ChunkSize> *pool_;
-	public:
-		iterator(BasicPool<T, ChunkSize> *pool, std::size_t x) :ind_(x), pool_(pool) {}
-		iterator(const iterator& it) : ind_(it.ind_), pool_(it.pool_) {}
-		iterator& operator++() { while (ind_ < pool_->end_ && !pool_->usage(ind_)) { ++ind_; }return *this; }
-		iterator operator++(int) { iterator tmp(*this); operator++(); return tmp; }
-		bool operator==(const iterator& rhs) { return ind_ == rhs.ind_ && pool_ == rhs.pool_; }
-		bool operator!=(const iterator& rhs) { return ind_ != rhs.ind_ || pool_ != rhs.pool_; }
-		T& operator*() { return *(pool_->get(ind_)); }
-		friend BasicPool < T, ChunkSize >;
-	};
-
 
 }

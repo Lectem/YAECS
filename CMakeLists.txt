@@ -5,6 +5,10 @@ project(YAECS CXX)
 message(status ${CMAKE_INCLUDE_PATH})
 
 
+if(PROJECT_BINARY_DIR STREQUAL PROJECT_SOURCE_DIR)
+   message(FATAL_ERROR "In-tree build attempt detected, aborting. Set your build dir outside your source dir, delete CMakeCache.txt from source root and try again.")
+endif()
+
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
 CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
@@ -21,9 +25,6 @@ set(CMAKE_BUILD_TYPE Release)
 
 
 
-if(PROJECT_BINARY_DIR STREQUAL PROJECT_SOURCE_DIR)
-   message(FATAL_ERROR "In-tree build attempt detected, aborting. Set your build dir outside your source dir, delete CMakeCache.txt from source root and try again.")
-endif()
 
 
 include_directories(include)

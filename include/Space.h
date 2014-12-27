@@ -100,10 +100,12 @@ namespace YAECS {
 
 		void update()
 		{
-			for (auto sys : systems_)
+			for (System* sys : systems_)
 			{
 			    if(sys != nullptr)
+                {
                     sys->update(*this);
+                }
 			}
 		}
 
