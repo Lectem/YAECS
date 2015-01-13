@@ -1,4 +1,4 @@
-YAECS
+YAECS[![Build Status](https://travis-ci.org/Lectem/YAECS.svg?branch=master)](https://travis-ci.org/Lectem/YAECS)
 =====
 
 Yet another entity-components system written in c++11
