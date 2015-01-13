@@ -44,3 +44,5 @@ file(
 )
 
 add_executable(YAECS ${source_files})
+
+add_executable(example1 examples/example1.cpp)
