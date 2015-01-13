@@ -14,11 +14,88 @@
 
 namespace YAECS {
 
+	/**
+	* Space
+	* |- View
+	*   |- iterator
+	*/
+
+
 	class Space
 	{
 	public:
-		template<class First, class ... Components>
-		class View;
+
+		template<class FirstComp, class ... Components>
+		class View
+		{
+			class iterator : public std::iterator < std::input_iterator_tag, Entity::Id >
+			{
+				Space* space_;
+				tuple<ComponentManager<FirstComp>*, ComponentManager<Components>* ... > comps_;
+				tuple<typename ComponentManager<FirstComp>::iterator, typename ComponentManager<Components>::iterator ...> comps_iters_;
+
+
+				template<size_t N = 0>
+				bool getComponent(Entity::Id ent)
+				{
+					get<N>(comps_iters_) = get<N>(comps_)->getAttachedComponent(ent);
+					return std::get<N>(comps_iters_) != std::get<N>(comps_)->end();
+				}
+				template<size_t N>
+				typename std::enable_if< N == 1 + sizeof...(Components), bool>::type hasComponents(Entity::Id)
+				{
+					return true;
+				}
+
+				template<size_t N>
+				typename std::enable_if< N <= sizeof...(Components), bool>::type hasComponents(Entity::Id ent)
+				{
+					return getComponent<N>(ent) && hasComponents<N + 1>(ent);
+				}
+
+			public:
+				iterator(Space* space, bool end)
+						:space_(space)
+				{
+					comps_ = make_tuple(space_->getManager<FirstComp>(), space->getManager<Components>()...);
+					if (end)get<0>(comps_iters_) = std::get<0>(comps_)->end();
+					else{
+						get<0>(comps_iters_) = std::get<0>(comps_)->begin();
+						if(!hasComponents<1>(getEnt())) operator++();
+					}
+				};
+				iterator(const iterator& it)
+						:space_(it.space_), comps_(it.comps_),comps_iters_(it.comps_iters_){}
+
+				iterator& operator++()
+				{
+					do ++get<0>(comps_iters_);
+					while (get<0>(comps_iters_) != std::get<0>(comps_)->end()
+							&& !hasComponents<1>(getEnt()));
+					return *this;
+				}
+				iterator operator++(int) { iterator tmp(*this); operator++(); return tmp; }
+				bool operator==(const iterator& rhs) { return get<0>(comps_iters_) == get<0>(rhs.comps_iters_); }
+				bool operator!=(const iterator& rhs) { return get<0>(comps_iters_) != get<0>(rhs.comps_iters_); }
+				Entity::Id operator*() { return getEnt(); }
+				bool isEnd() { return get<0>(comps_iters_) == std::get<0>(comps_)->end(); }
+				Entity::Id getEnt(){return get<0>(comps_iters_)->first;}
+
+				template<class T>
+				T& getComponent()
+				{
+					return *tupleGet<typename ComponentManager<T>::iterator>(comps_iters_)->second;
+					//return *(space_->getManager<T>()->getAttachedComponent(get<0>(comps_iters_)->first))->second;
+				}
+			};
+			Space *space_;
+			View(Space* space) :space_(space) {}
+			friend class Space;
+		public:
+			iterator begin() { return iterator(space_, false); }
+			iterator end() { return iterator(space_, true); }
+		};
+
 		Space() :lastEntityId(0) {}
 		~Space()
 		{
@@ -95,8 +172,8 @@ namespace YAECS {
 		}
 
 		template<class ...T>
-		typename Space::View<T...> getEntitiesWith()
-            { return typename Space::View<T...>(this); }
+		View<T...> getEntitiesWith()
+            { return View<T...>(this); }
 
 		void update()
 		{
@@ -151,74 +228,4 @@ namespace YAECS {
 	};
 
 
-	template<class FirstComp, class ... Components>
-	class Space::View
-	{
-		class iterator : public std::iterator < std::input_iterator_tag, Entity::Id >
-		{
-			Space* space_;
-			tuple<ComponentManager<FirstComp>*, ComponentManager<Components>* ... > comps_;
-			tuple<typename ComponentManager<FirstComp>::iterator, typename ComponentManager<Components>::iterator ...> comps_iters_;
-
-
-			template<size_t N = 0>
-			bool getComponent(Entity::Id ent)
-			{
-				get<N>(comps_iters_) = get<N>(comps_)->getAttachedComponent(ent);
-				return std::get<N>(comps_iters_) != std::get<N>(comps_)->end();
-			}
-			template<size_t N>
-			typename std::enable_if< N == 1 + sizeof...(Components), bool>::type hasComponents(Entity::Id)
-			{
-				return true;
-			}
-
-			template<size_t N>
-			typename std::enable_if< N <= sizeof...(Components), bool>::type hasComponents(Entity::Id ent)
-			{
-				return getComponent<N>(ent) && hasComponents<N + 1>(ent);
-			}
-
-		public:
-
-			iterator(Space* space, bool end)
-				:space_(space), comps_(space_->getManager<FirstComp>(), space->getManager<Components>()...)
-			{
-				if (end)get<0>(comps_iters_) = std::get<0>(comps_)->end();
-				else{
-                        get<0>(comps_iters_) = std::get<0>(comps_)->begin();
-                        if(!hasComponents<1>(getEnt())) operator++();
-				}
-			}
-			iterator(const iterator& it)
-				:space_(it.space_), comps_(it.comps_),comps_iters_(it.comps_iters_){}
-
-			iterator& operator++()
-			{
-				do ++get<0>(comps_iters_);
-				while (get<0>(comps_iters_) != std::get<0>(comps_)->end()
-					&& !hasComponents<1>(getEnt()));
-				return *this;
-			}
-			iterator operator++(int) { iterator tmp(*this); operator++(); return tmp; }
-			bool operator==(const iterator& rhs) { return get<0>(comps_iters_) == get<0>(rhs.comps_iters_); }
-			bool operator!=(const iterator& rhs) { return get<0>(comps_iters_) != get<0>(rhs.comps_iters_); }
-			Entity::Id operator*() { return getEnt(); }
-			bool isEnd() { return get<0>(comps_iters_) == std::get<0>(comps_)->end(); }
-			Entity::Id getEnt(){return get<0>(comps_iters_)->first;}
-
-			template<class T>
-            T& getComponent()
-			{
-			    return *tupleGet<typename ComponentManager<T>::iterator>(comps_iters_)->second;
-			    //return *(space_->getManager<T>()->getAttachedComponent(get<0>(comps_iters_)->first))->second;
-			}
-		};
-		Space *space_;
-		View(Space* space) :space_(space) {}
-		friend class Space;
-	public:
-		iterator begin() { return iterator(space_, false); }
-		iterator end() { return iterator(space_, true); }
-	};
 }
