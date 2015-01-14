@@ -28,6 +28,7 @@ namespace YAECS {
 		template<class FirstComp, class ... Components>
 		class View
 		{
+		public:
 			class iterator : public std::iterator < std::input_iterator_tag, Entity::Id >
 			{
 				Space* space_;
@@ -88,12 +89,13 @@ namespace YAECS {
 					//return *(space_->getManager<T>()->getAttachedComponent(get<0>(comps_iters_)->first))->second;
 				}
 			};
+			iterator begin() { return iterator(space_, false); }
+			iterator end() { return iterator(space_, true); }
+
+		private:
 			Space *space_;
 			View(Space* space) :space_(space) {}
 			friend class Space;
-		public:
-			iterator begin() { return iterator(space_, false); }
-			iterator end() { return iterator(space_, true); }
 		};
 
 		Space() :lastEntityId(0) {}
