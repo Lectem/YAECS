@@ -63,7 +63,7 @@ namespace YAECS {
 					if (end)get<0>(comps_iters_) = std::get<0>(comps_)->end();
 					else{
 						get<0>(comps_iters_) = std::get<0>(comps_)->begin();
-						if(!hasComponents<1>(getEnt())) operator++();
+						if(get<0>(comps_iters_) != get<0>(comps_)->end() && !hasComponents<1>(getEnt())) operator++();
 					}
 				};
 				iterator(const iterator& it)
@@ -115,10 +115,14 @@ namespace YAECS {
 
 		void destroyEntity(Entity::Id entity)
 		{
-			entities_.erase(entity);
-			for (auto it = cmanagers_.begin(); it != cmanagers_.end(); ++it)
+			auto it =entities_.find(entity);
+			if( it != entities_.end())
 			{
-				(*it)->deleteComponent(entity);
+				entities_.erase(it);
+				for (auto it = cmanagers_.begin(); it != cmanagers_.end(); ++it)
+				{
+					(*it)->deleteComponent(entity);
+				}
 			}
 		}
 
