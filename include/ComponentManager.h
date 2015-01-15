@@ -37,6 +37,8 @@ namespace YAECS {
 		iterator begin() { return linksEC_.begin(); }
 		iterator end() { return linksEC_.end(); }
 		iterator getAttachedComponent(Entity::Id ent) { return linksEC_.find(ent); }
+		bool hasAttachedComponent(Entity::Id ent);
+
 	private:
 		template<class ...Args>
 		typename Pool::iterator createComponent(Args&& ...args);
@@ -64,6 +66,12 @@ namespace YAECS {
 	bool ComponentManager<T, Pool>::attachComponent(Entity::Id ent, typename Pool::iterator cp)
 	{
 		return linksEC_.emplace(ent, cp).second;
+	}
+
+
+	template<class T, class Pool> bool ComponentManager<T, Pool>::hasAttachedComponent(Entity::Id ent)
+	{
+		return linksEC_.find(ent) != linksEC_.end();
 	}
 
 	template<class T, class Pool> typename Pool::iterator ComponentManager<T, Pool>::dettachComponent(Entity::Id ent)

@@ -31,13 +31,14 @@ namespace YAECS {
 		public:
 			class iterator : public std::iterator < std::input_iterator_tag, Entity::Id >
 			{
+				friend class View;
 				Space* space_;
 				tuple<ComponentManager<FirstComp>*, ComponentManager<Components>* ... > comps_;
 				tuple<typename ComponentManager<FirstComp>::iterator, typename ComponentManager<Components>::iterator ...> comps_iters_;
 
 
 				template<size_t N = 0>
-				bool getComponent(Entity::Id ent)
+				bool hasComponent(Entity::Id ent)
 				{
 					get<N>(comps_iters_) = get<N>(comps_)->getAttachedComponent(ent);
 					return std::get<N>(comps_iters_) != std::get<N>(comps_)->end();
@@ -51,7 +52,7 @@ namespace YAECS {
 				template<size_t N>
 				typename std::enable_if< N <= sizeof...(Components), bool>::type hasComponents(Entity::Id ent)
 				{
-					return getComponent<N>(ent) && hasComponents<N + 1>(ent);
+					return hasComponent<N>(ent) && hasComponents<N + 1>(ent);
 				}
 
 			public:
@@ -86,7 +87,6 @@ namespace YAECS {
 				T& getComponent()
 				{
 					return *tupleGet<typename ComponentManager<T>::iterator>(comps_iters_)->second;
-					//return *(space_->getManager<T>()->getAttachedComponent(get<0>(comps_iters_)->first))->second;
 				}
 			};
 			iterator begin() { return iterator(space_, false); }
@@ -186,6 +186,19 @@ namespace YAECS {
                     sys->update(*this);
                 }
 			}
+		}
+
+
+		template<class C>
+		bool hasComponent(Entity::Id ent)
+		{
+			return getManager<C>()->hasAttachedComponent(ent);
+		}
+
+		template<class C>
+		C& getComponent(Entity::Id ent)
+		{
+			return *getManager<C>()->getAttachedComponent(ent)->second;
 		}
 
 	protected:
