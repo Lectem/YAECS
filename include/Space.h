@@ -38,21 +38,21 @@ namespace YAECS {
 
 
 				template<size_t N = 0>
-				bool hasComponent(Entity::Id ent)
+				bool hasComponent()
 				{
-					get<N>(comps_iters_) = get<N>(comps_)->getAttachedComponent(ent);
+					get<N>(comps_iters_) = get<N>(comps_)->getAttachedComponent(getEnt());
 					return std::get<N>(comps_iters_) != std::get<N>(comps_)->end();
 				}
 				template<size_t N>
-				typename std::enable_if< N == 1 + sizeof...(Components), bool>::type hasComponents(Entity::Id)
+				typename std::enable_if< N == 1 + sizeof...(Components), bool>::type hasComponents()
 				{
 					return true;
 				}
 
 				template<size_t N>
-				typename std::enable_if< N <= sizeof...(Components), bool>::type hasComponents(Entity::Id ent)
+				typename std::enable_if< N <= sizeof...(Components), bool>::type hasComponents()
 				{
-					return hasComponent<N>(ent) && hasComponents<N + 1>(ent);
+					return hasComponent<N>() && hasComponents<N + 1>();
 				}
 
 			public:
@@ -63,7 +63,7 @@ namespace YAECS {
 					if (end)get<0>(comps_iters_) = std::get<0>(comps_)->end();
 					else{
 						get<0>(comps_iters_) = std::get<0>(comps_)->begin();
-						if(get<0>(comps_iters_) != get<0>(comps_)->end() && !hasComponents<1>(getEnt())) operator++();
+						if(get<0>(comps_iters_) != get<0>(comps_)->end() && !hasComponents<1>()) operator++();
 					}
 				};
 				iterator(const iterator& it)
@@ -73,10 +73,10 @@ namespace YAECS {
 				{
 					do ++get<0>(comps_iters_);
 					while (get<0>(comps_iters_) != std::get<0>(comps_)->end()
-							&& !hasComponents<1>(getEnt()));
+							&& !hasComponents<1>());
 					return *this;
 				}
-				iterator operator++(int) { iterator tmp(*this); operator++(); return tmp; }
+				iterator operator++(int) =delete;//{ iterator tmp(*this); operator++(); return tmp; }
 				bool operator==(const iterator& rhs) { return get<0>(comps_iters_) == get<0>(rhs.comps_iters_); }
 				bool operator!=(const iterator& rhs) { return get<0>(comps_iters_) != get<0>(rhs.comps_iters_); }
 				Entity::Id operator*() { return getEnt(); }
@@ -89,13 +89,20 @@ namespace YAECS {
 					return *tupleGet<typename ComponentManager<T>::iterator>(comps_iters_)->second;
 				}
 			};
-			iterator begin() { return iterator(space_, false); }
-			iterator end() { return iterator(space_, true); }
+			iterator begin() {newIter =true;
+                return iterator(space_, false); }
+			iterator end() { if(newIter) {
+                    endIter = iterator(space_, true);
+                    newIter = false;
+                }
+                return endIter; }
 
 		private:
 			Space *space_;
-			View(Space* space) :space_(space) {}
+			View(Space* space) :space_(space),endIter(end()) {}
 			friend class Space;
+            bool newIter = true;
+            iterator endIter;
 		};
 
 		Space() :lastEntityId(0) {}
