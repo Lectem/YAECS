@@ -37,6 +37,7 @@ public:
 	{
 		//For each entity made of Displayable and Position components
 		auto view = space.getEntitiesWith<Displayable,Position>();
+        /* /!\ Those iterators are invalidated if you remove/add components/entities of the view /!\ */
 		for (auto it = view.begin(); it != view.end();++it)
 		{
 			// it is a "Handle"
