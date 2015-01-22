@@ -88,11 +88,6 @@ namespace YAECS {
 				{
 					return *tupleGet<typename ComponentManager<T>::iterator>(comps_iters_)->second;
 				}
-                template<class T>
-                bool hasComponent()
-                {
-                    return space_->hasComponent<T>(getEnt());
-                };
 			};
 			iterator begin() {newIter =true;
                 return iterator(space_, false); }
