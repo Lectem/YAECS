@@ -133,6 +133,11 @@ namespace YAECS {
 			}
 		}
 
+        size_t getNbEntities()
+        {
+            return entities_.size();
+        }
+
 		template<class CompType, class ... Args>
 		bool addComponent(Entity::Id entity, Args&& ...args)
 		{
