@@ -88,6 +88,9 @@ namespace YAECS {
 				{
 					return *tupleGet<typename ComponentManager<T>::iterator>(comps_iters_)->second;
 				}
+                /////////////////////////////////////////
+                ////// Space::View::iterator end ////////
+                /////////////////////////////////////////
 			};
 			iterator begin() {newIter =true;
                 return iterator(space_, false); }
@@ -103,7 +106,11 @@ namespace YAECS {
 			friend class Space;
             bool newIter = true;
             iterator endIter;
+            ///////////////////////////////////////
+            ////////// Space::View end ////////////
+            ///////////////////////////////////////
 		};
+
 
 		Space() :lastEntityId(0) {}
 		~Space()
@@ -114,108 +121,35 @@ namespace YAECS {
 				if(sys)	delete sys;
 		};
 
-		Entity::Id createEntity()
-		{
-			entities_.insert(lastEntityId);
-			return lastEntityId++;
-		}
+		Entity::Id createEntity();
 
-		void destroyEntity(Entity::Id entity)
-		{
-			auto it =entities_.find(entity);
-			if( it != entities_.end())
-			{
-				entities_.erase(it);
-				for (auto it = cmanagers_.begin(); it != cmanagers_.end(); ++it)
-				{
-					(*it)->deleteComponent(entity);
-				}
-			}
-		}
+		void destroyEntity(Entity::Id entity);
 
-        size_t getNbEntities()
-        {
-            return entities_.size();
-        }
+        size_t getNbEntities();
 
 		template<class CompType, class ... Args>
-		bool addComponent(Entity::Id entity, Args&& ...args)
-		{
-			assert(entities_.find(entity) != entities_.end());
-			static ComponentManager<CompType>* manager = getManager<CompType>();
-			return manager->addComponent(entity, std::forward<Args>(args)...);
-		}
+		bool addComponent(Entity::Id entity, Args&& ...args);
 
 		template<class CompType, class ... Args>
-		void deleteComponent(Entity::Id entity)
-		{
-			assert(entities_.find(entity) != entities_.end());
-			static ComponentManager<CompType>* manager = getManager<CompType>();
-			return manager->deleteComponent(entity);
-		}
+		void deleteComponent(Entity::Id entity);
 
 		template<class SysType, class ... Args>
-		void addSystem(Args&& ...args)
-		{/*
-		    auto & sysind =systemIndex<SysType>();
-			if(sysind == systems_.end() )
-            {
-                systems_.push_front(new SysType(args...));
-                sysind = systems_.begin();
-            }*/
-            size_t index = systemIndex<SysType>();
-			if (index >= systems_.size())
-			{
-				//necessary because comp indexes are the same for all space instances...
-				systems_.resize(index+1,nullptr);
-			}
-			if(systems_[index] == nullptr)systems_[index]=(new SysType(args...));
-		}
+		void addSystem(Args&& ...args);
 
 		template<class SysType>
-		void deleteSystem()
-		{
-			size_t index=systemIndex<SysType>();
-			if(systems_[index] != nullptr)
-            {
-                delete systems_[index];
-                systems_[index]=nullptr;
-            }
-			/*auto & it = systemIndex<SysType>();
-			assert(it != systems_.end());
-			delete *it;
-			systems_.erase(it);
-			it = systems_.end();*/
-
-		}
+		void deleteSystem();
 
 		template<class ...T>
-		View<T...> getEntitiesWith()
-            { return View<T...>(this); }
+		View<T...> getEntitiesWith();
 
-		void update()
-		{
-			for (System* sys : systems_)
-			{
-			    if(sys != nullptr)
-                {
-                    sys->update(*this);
-                }
-			}
-		}
+		void update();
 
+
+        template<class C,class ...CTail>
+		bool hasComponent(Entity::Id ent);
 
 		template<class C>
-		bool hasComponent(Entity::Id ent)
-		{
-			return getManager<C>()->hasAttachedComponent(ent);
-		}
-
-		template<class C>
-		C& getComponent(Entity::Id ent)
-		{
-			return *getManager<C>()->getAttachedComponent(ent)->second;
-		}
+		C& getComponent(Entity::Id ent);
 
 	protected:
 	private:
@@ -249,15 +183,111 @@ namespace YAECS {
 		}
 
 		template<class SysType>
-		//list<System*>::iterator& systemIndex()
 		size_t systemIndex()
 		{
-			//static typename std::list<System*>::iterator sys_index_=systems_.end();
 			static size_t sys_index_=systemTypesCount_++;
 			return sys_index_;
 		}
 	};
 
+
+    template <>
+    bool Space::hasComponent<void>(Entity::Id)
+    {
+        return true;
+    }
+    Entity::Id Space::createEntity()
+    {
+        entities_.insert(lastEntityId);
+        return lastEntityId++;
+    }
+
+    void Space::destroyEntity(Entity::Id entity)
+    {
+        auto it =entities_.find(entity);
+        if( it != entities_.end())
+        {
+            entities_.erase(it);
+            for (auto it = cmanagers_.begin(); it != cmanagers_.end(); ++it)
+            {
+                (*it)->deleteComponent(entity);
+            }
+        }
+    }
+
+    void Space::update()
+    {
+        for (System* sys : systems_)
+        {
+            if(sys != nullptr)
+            {
+                sys->update(*this);
+            }
+        }
+    }
+
+    size_t Space::getNbEntities()
+    {
+        return entities_.size();
+    }
+
+    template<class CompType, class ... Args>
+    bool Space::addComponent(Entity::Id entity, Args&& ...args)
+    {
+        assert(entities_.find(entity) != entities_.end());
+        static ComponentManager<CompType>* manager = getManager<CompType>();
+        return manager->addComponent(entity, std::forward<Args>(args)...);
+    }
+
+    template<class CompType, class ... Args>
+    void Space::deleteComponent(Entity::Id entity)
+    {
+        assert(entities_.find(entity) != entities_.end());
+        static ComponentManager<CompType>* manager = getManager<CompType>();
+        return manager->deleteComponent(entity);
+    }
+
+    template<class SysType, class ... Args>
+    void Space::addSystem(Args&& ...args)
+    {
+        size_t index = systemIndex<SysType>();
+        if (index >= systems_.size())
+        {
+            //necessary because comp indexes are the same for all space instances...
+            systems_.resize(index+1,nullptr);
+        }
+        if(systems_[index] == nullptr)systems_[index]=(new SysType(args...));
+    }
+
+    template<class SysType>
+    void Space::deleteSystem()
+    {
+        size_t index=systemIndex<SysType>();
+        if(systems_[index] != nullptr)
+        {
+            delete systems_[index];
+            systems_[index]=nullptr;
+        }
+    }
+
+    template<class ...T>
+    Space::View<T...> Space::getEntitiesWith()
+    { return Space::View<T...>(this); }
+
+    void update();
+
+
+    template<class C,class ...CTail>
+    bool Space::hasComponent(Entity::Id ent)
+    {
+        return getManager<C>()->hasAttachedComponent(ent) && hasComponent< CTail... , void>(ent);
+    }
+
+    template<class C>
+    C& Space::getComponent(Entity::Id ent)
+    {
+        return *getManager<C>()->getAttachedComponent(ent)->second;
+    }
 
 }
 #include "EntityDestroyerRAII.h"
