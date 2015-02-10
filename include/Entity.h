@@ -12,5 +12,6 @@ namespace YAECS {
 	struct Entity
 	{
 		typedef std::size_t Id;
+        static const Id NoEntity = (size_t)-1;
 	};
 }
