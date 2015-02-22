@@ -8,6 +8,7 @@
 #include <vector>
 #include <unordered_set>
 #include <list>
+#include <fmod_codec.h>
 #include "ComponentManager.h"
 #include "System.h"
 #include "TupleGet.h"
@@ -135,7 +136,8 @@ namespace YAECS {
 
 		template<class SysType, class ... Args>
 		void addSystem(Args&& ...args);
-
+		template<class SysType>
+		System* getSystem();
 		template<class SysType>
 		void deleteSystem();
 
@@ -259,11 +261,23 @@ namespace YAECS {
         if(systems_[index] == nullptr)systems_[index]=(new SysType(args...));
     }
 
+
+	template<class SysType>
+	System* Space::getSystem()
+	{
+		size_t index=systemIndex<SysType>();
+		if(index < systems_.size() && systems_[index] != nullptr)
+		{
+			return systems_[index];
+		}
+		return nullptr;
+	}
+
     template<class SysType>
     void Space::deleteSystem()
     {
         size_t index=systemIndex<SysType>();
-        if(systems_[index] != nullptr)
+        if(index < systems_.size() && systems_[index] != nullptr)
         {
             delete systems_[index];
             systems_[index]=nullptr;
