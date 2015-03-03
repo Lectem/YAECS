@@ -31,7 +31,9 @@ namespace YAECS {
 		explicit BasicPool()
 			: element_size_(sizeof(T)), chunk_size_(ChunkSize)
 		{
-			reserve(1);
+			blocks_.reserve(10);
+			blocks_usage_.reserve(10);
+			reserve(chunk_size_*2);
 		}
 
 		~BasicPool()
