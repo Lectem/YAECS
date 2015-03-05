@@ -11,6 +11,7 @@
 #include "ComponentManager.h"
 #include "System.h"
 #include "TupleGet.h"
+#include <map>
 
 namespace YAECS {
 
@@ -133,16 +134,61 @@ namespace YAECS {
 		template<class CompType, class ... Args>
 		void deleteComponent(Entity::Id entity);
 
+        /**
+        * \brief Adds a new System of class SysType to the Space. Does nothing if the System already exists in this Space
+        *
+        * Adds a new System of class SysType to the Space. Does nothing if the System already exists in this Space
+        * Note that the lowest priority will be set (as in using minimum value so that it will be executed last).
+        * See setSystemPriority() for more information about priorities.
+        *
+        * \param args Arguments matching those of one of the SysType constructor
+        */
 		template<class SysType, class ... Args>
 		void addSystem(Args&& ...args);
 		template<class SysType>
 		System* getSystem();
+
+        /**
+        * \brief Sets a system priority.
+        *
+        * The Space::update method calls all the systems in the ascending order of priorities. It means that a System with
+        * priority 0 will be executed before a System with priority 42. Note that in case of multiple Systems having the
+        * same priority, the order to be expected is the one of the insertions/priority modifications.
+        *
+        * Note that it will also unpause the System.
+        *
+        * \param prio the new priority of the System
+        */
+        template<class SysType>
+		void setSystemPriority(int prio);
+
+        /**
+        * \brief Pauses the SysType System. It will not be called by the Space::update method
+        */
+        template<class SysType>
+		void pauseSystem();
+
+        /**
+        * \brief Unpauses the SysType System. It will called by the Space::update method
+        *
+        * While this will actually unpause a System, it will also update its priority.
+        * You should expect an unpaused System to be executed after the other Systems of same priority.
+        */
+        template<class SysType>
+		void unpauseSystem();
 		template<class SysType>
 		void deleteSystem();
 
 		template<class ...T>
 		View<T...> getEntitiesWith();
 
+        /**
+        * \brief Updates all the Systems.
+        *
+        * The Space::update method calls all the systems in the ascending order of priorities. It means that a System with
+        * priority 0 will be executed before a System with priority 42. Note that in case of multiple Systems having the
+        * same priority, the order to be expected is the one of the insertions/priority modifications.
+        */
 		void update();
 
 
@@ -152,12 +198,13 @@ namespace YAECS {
 		template<class C>
 		C& getComponent(Entity::Id ent);
 
-	protected:
 	private:
 		vector<BaseComponentManager*> cmanagers_;
 		unordered_set<Entity::Id> entities_;
 		Entity::Id lastEntityId;
 		vector<System*> systems_;
+        vector<size_t > systemsPriorities_;
+        multimap<int,size_t > systemsOrder_;
 
 		size_t componentTypesCount_ = 0;
 		size_t systemTypesCount_ = 0;
@@ -189,6 +236,8 @@ namespace YAECS {
 			static size_t sys_index_=systemTypesCount_++;
 			return sys_index_;
 		}
+
+        void removeSystemFromPriorityList(size_t index);
 	};
 
 
@@ -218,11 +267,11 @@ namespace YAECS {
 
     void Space::update()
     {
-        for (System* sys : systems_)
+        for( pair<int,int> sysIndex : systemsOrder_)
         {
-            if(sys != nullptr)
+            if(systems_[sysIndex.second] != nullptr)
             {
-                sys->update(*this);
+                systems_[sysIndex.second]->update(*this);
             }
         }
     }
@@ -256,21 +305,77 @@ namespace YAECS {
         {
             //necessary because comp indexes are the same for all space instances...
             systems_.resize(index+1,nullptr);
+            systemsPriorities_.resize(index+1,0);
         }
-        if(systems_[index] == nullptr)systems_[index]=(new SysType(args...));
+        if(systems_[index] == nullptr)
+        {
+            systems_[index]=(new SysType(args...));
+            if(systemsOrder_.empty())systemsPriorities_[index]=0;
+            else systemsPriorities_[index]=systemsOrder_.rbegin()->first + 1 ;
+            systemsOrder_.insert(make_pair(systemsPriorities_[index], index));
+        }
     }
 
 
-	template<class SysType>
-	System* Space::getSystem()
-	{
-		size_t index=systemIndex<SysType>();
-		if(index < systems_.size() && systems_[index] != nullptr)
-		{
-			return systems_[index];
-		}
-		return nullptr;
-	}
+    template<class SysType>
+    System* Space::getSystem()
+    {
+        size_t index=systemIndex<SysType>();
+        if(index < systems_.size() && systems_[index] != nullptr)
+        {
+            return systems_[index];
+        }
+        return nullptr;
+    }
+
+
+    template<class SysType>
+    void Space::setSystemPriority(int prio)
+    {
+        size_t index=systemIndex<SysType>();
+        if(index < systemsPriorities_.size())
+        {
+            removeSystemFromPriorityList(index);
+            systemsOrder_.insert(make_pair(prio, index));
+        }
+    }
+
+    void Space::removeSystemFromPriorityList(size_t index)
+    {
+        auto ret = systemsOrder_.equal_range(systemsPriorities_[index]);
+        for (auto it = ret.first; it != ret.second; ++it)
+        {
+            if (it->second == index) {
+                systemsOrder_.erase(it);
+                break;
+            }
+        }
+    }
+
+
+    template<class SysType>
+    void Space::pauseSystem()
+    {
+        size_t index=systemIndex<SysType>();
+        if(index < systemsPriorities_.size())
+        {
+            removeSystemFromPriorityList(index);
+        }
+    }
+
+
+    template<class SysType>
+    void Space::unpauseSystem()
+    {
+        size_t index=systemIndex<SysType>();
+        if(index < systemsPriorities_.size())
+        {
+            removeSystemFromPriorityList(index);
+            systemsOrder_.insert(make_pair(systemsPriorities_[index], index));
+        }
+    }
+
+
 
     template<class SysType>
     void Space::deleteSystem()
@@ -280,6 +385,8 @@ namespace YAECS {
         {
             delete systems_[index];
             systems_[index]=nullptr;
+            removeSystemFromPriorityList(systemsPriorities_[index]);
+            systemsPriorities_[index]=0;
         }
     }
 
