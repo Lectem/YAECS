@@ -11,7 +11,7 @@ if(PROJECT_BINARY_DIR STREQUAL PROJECT_SOURCE_DIR)
    message(FATAL_ERROR "In-tree build attempt detected, aborting. Set your build dir outside your source dir, delete CMakeCache.txt from source root and try again.")
 endif()
 
-if ((${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang") OR CMAKE_COMPILER_IS_GNUCXX)
+if (("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") OR CMAKE_COMPILER_IS_GNUCXX)
     include(CheckCXXCompilerFlag)
     check_cxx_compiler_flag(-std=c++11 SUPPORTS_STD_CXX11)
     check_cxx_compiler_flag(-std=c++0x SUPPORTS_STD_CXX01)
