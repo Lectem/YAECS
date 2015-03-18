@@ -37,7 +37,7 @@ namespace YAECS {
 				tuple<ComponentManager<FirstComp>*, ComponentManager<Components>* ... > comps_;
 				tuple<typename ComponentManager<FirstComp>::iterator, typename ComponentManager<Components>::iterator ...> comps_iters_;
 
-
+                //TODO:There are probably (actually i'm sure there are) better ways to do this
 				template<size_t N = 0>
 				bool hasComponent()
 				{

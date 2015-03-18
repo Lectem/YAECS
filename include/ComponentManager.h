@@ -34,6 +34,7 @@ namespace YAECS {
 		bool addComponent(Entity::Id ent, Args&& ...args);
 		void deleteComponent(Entity::Id id);
 		void clear();
+		//TODO:Should actually use the pool iterator... Maybe change it and check if it's safe later on
 		iterator begin() { return linksEC_.begin(); }
 		iterator end() { return linksEC_.end(); }
 		iterator getAttachedComponent(Entity::Id ent) { return linksEC_.find(ent); }
